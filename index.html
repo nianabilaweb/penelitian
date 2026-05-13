@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AISa - Dashboard</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <link rel="stylesheet" href="css/responsive.css"/>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo"><i class="fa-solid fa-seedling"></i></div>
+        <div class="meta">
+          <b>AISa Smart Farming</b>
+          <span>Ayam • Ikan • Sayur</span>
+        </div>
+      </div>
+
+      <nav class="menu">
+        <a href="index.html"><i class="fa-solid fa-house"></i> Dashboard</a>
+        <a href="monitoring.html"><i class="fa-solid fa-chart-line"></i> Monitoring</a>
+        <a href="control.html"><i class="fa-solid fa-sliders"></i> Automation</a>
+        <a href="greenhouse.html"><i class="fa-solid fa-leaf"></i> Greenhouse</a>
+        <a href="analytics.html"><i class="fa-solid fa-chart-pie"></i> Analytics</a>
+        <a href="notifications.html"><i class="fa-solid fa-bell"></i> Notifications</a>
+        <a href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <header class="topbar">
+        <div class="left">
+          <button class="icon-btn" data-action="toggle-sidebar" aria-label="Toggle Sidebar">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+
+          <div class="page-title">
+            <b>Dashboard</b>
+            <span>Realtime monitoring & quick control</span>
+          </div>
+        </div>
+
+        <div class="right">
+          <div class="pill">
+            <span class="dot"></span>
+            <span>Realtime: Connected</span>
+          </div>
+          <button class="icon-btn" data-action="toggle-theme" aria-label="Toggle Theme">
+            <i class="fa-solid fa-sun"></i>
+          </button>
+        </div>
+      </header>
+
+      <section class="content">
+        <!-- Realtime Statistic Cards -->
+        <div class="grid cards">
+          <div class="card col-3">
+            <div class="card-header">
+              <div class="card-title"><i class="fa-solid fa-temperature-high"></i> Suhu Udara</div>
+              <span class="badge success">Normal</span>
+            </div>
+            <div class="stat">
+              <div>
+                <span class="value" data-stat="suhu">26.0</span><span class="unit">°C</span>
+              </div>
+              <div class="icon"><i class="fa-solid fa-temperature-high"></i></div>
+            </div>
+          </div>
+
+          <div class="card col-3">
+            <div class="card-header">
+              <div class="card-title"><i class="fa-solid fa-water"></i> Kelembaban</div>
+              <span class="badge">Stable</span>
+            </div>
+            <div class="stat">
+              <div>
+                <span class="value" data-stat="hum">65</span><span class="unit">%</span>
+              </div>
+              <div class="icon"><i class="fa-solid fa-water"></i></div>
+            </div>
+          </div>
+
+          <div class="card col-3">
+            <div class="card-header">
+              <div class="card-title"><i class="fa-solid fa-vial"></i> pH Air</div>
+              <span class="badge warning">Watch</span>
+            </div>
+            <div class="stat">
+              <div>
+                <span class="value" data-stat="ph">6.80</span><span class="unit">pH</span>
+              </div>
+              <div class="icon"><i class="fa-solid fa-vial"></i></div>
+            </div>
+          </div>
+
+          <div class="card col-3">
+            <div class="card-header">
+              <div class="card-title"><i class="fa-solid fa-droplet"></i> Nutrisi TDS</div>
+              <span class="badge">OK</span>
+            </div>
+            <div class="stat">
+              <div>
+                <span class="value" data-stat="tds">900</span><span class="unit">ppm</span>
+              </div>
+              <div class="icon"><i class="fa-solid fa-droplet"></i></div>
+            </div>
+          </div>
+
+          <div class="card col-3">
+            <div class="card-header">
+              <div class="card-title"><i class="fa-solid fa-wave-square"></i> Level Air</div>
+              <span class="badge success">Good</span>
+            </div>
+            <div class="stat">
+              <div>
+                <span class="value" data-stat="level">18.0</span><span class="unit">cm</span>
+              </div>
+              <div class="icon"><i class="fa-solid fa-wave-square"></i></div>
+            </div>
+          </div>
+
+          <div class="card col-3">
+            <div class="card-header">
+              <div class="card-title"><i class="fa-solid fa-egg"></i> Jumlah Telur</div>
+              <span class="badge">Today</span>
+            </div>
+            <div class="stat">
+              <div>
+                <span class="value" data-stat="egg">12</span><span class="unit">pcs</span>
+              </div>
+              <div class="icon"><i class="fa-solid fa-egg"></i></div>
+            </div>
+          </div>
+
+          <!-- Sensor Realtime Chart -->
+          <div class="card col-8" style="height:360px;">
+            <div class="card-header">
+              <div class="card-title"><i class="fa-solid fa-chart-line"></i> Sensor Realtime Chart</div>
+              <span class="badge">Last 12 points</span>
+            </div>
+            <div style="height:290px;">
+              <canvas id="sensorChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Device Status + Quick Actions -->
+          <div class="card col-4">
+            <div class="card-header">
+              <div class="card-title"><i class="fa-solid fa-sliders"></i> Device Status</div>
+              <span class="badge success">Online</span>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:12px;">
+              <div style="display:flex; align-items:center; justify-content:space-between;">
+                <div><i class="fa-solid fa-fan"></i> Kipas</div>
+                <div class="toggle" data-on="false" data-label="Kipas"></div>
+              </div>
+              <div style="display:flex; align-items:center; justify-content:space-between;">
+                <div><i class="fa-solid fa-faucet"></i> Pompa Air</div>
+                <div class="toggle" data-on="true" data-label="Pompa Air"></div>
+              </div>
+              <div style="display:flex; align-items:center; justify-content:space-between;">
+                <div><i class="fa-solid fa-drumstick-bite"></i> Pakan Ayam</div>
+                <div class="toggle" data-on="false" data-label="Pakan Ayam"></div>
+              </div>
+              <div style="display:flex; align-items:center; justify-content:space-between;">
+                <div><i class="fa-solid fa-fish"></i> Pakan Ikan</div>
+                <div class="toggle" data-on="false" data-label="Pakan Ikan"></div>
+              </div>
+
+              <div class="card" style="padding:12px; box-shadow:none;">
+                <div style="display:flex; align-items:center; justify-content:space-between;">
+                  <b>Automatic Mode</b>
+                  <button class="icon-btn" style="width:auto; padding:0 14px;" onclick="AISaToast.info('Automatic mode toggled')">
+                    <i class=""></i>&nbsp; Toggle
+                  </button>
+                </div>
+                <span style="display:block; margin-top:6px; color:var(--muted); font-size:12px;">
+                  Mode otomatis menyesuaikan kipas/pompa berdasarkan sensor.
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notifications section -->
+          <div class="card col-12">
+            <div class="card-header">
+              <div class="card-title"><i class="fa-solid fa-bell"></i> Notifications</div>
+              <span class="badge">Realtime Alerts</span>
+            </div>
+
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Waktu</th>
+                  <th>Tipe</th>
+                  <th>Pesan</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>08:14</td>
+                  <td><span class="badge warning">warning</span></td>
+                  <td>pH air terlalu rendah</td>
+                  <td><span class="badge">Open</span></td>
+                </tr>
+                <tr>
+                  <td>11:02</td>
+                  <td><span class="badge danger">danger</span></td>
+                  <td>Suhu greenhouse terlalu panas</td>
+                  <td><span class="badge">Escalated</span></td>
+                </tr>
+                <tr>
+                  <td>12:30</td>
+                  <td><span class="badge success">info</span></td>
+                  <td>Jadwal pakan berhasil dijalankan</td>
+                  <td><span class="badge">Closed</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script src="js/chart.js"></script>
+  <script src="js/realtime.js"></script>
+</body>
+</html>

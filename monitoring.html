@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AISa - Monitoring Sensor</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <link rel="stylesheet" href="css/responsive.css"/>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* Sensor Card Detail Styles */
+    .sensor-card {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .sensor-mini-chart {
+      height: 60px;
+      margin-top: 8px;
+    }
+
+    .sensor-status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      display: inline-block;
+      margin-right: 4px;
+    }
+
+    .status-dot.online {
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(34,197,94,0.15);
+    }
+
+    .status-dot.offline {
+      background: var(--danger);
+      box-shadow: 0 0 0 4px rgba(239,68,68,0.15);
+    }
+
+    .status-dot.warning {
+      background: var(--warning);
+      box-shadow: 0 0 0 4px rgba(250,204,21,0.15);
+    }
+
+    /* History Table + Tabs */
+    .tabs {
+      display: flex;
+      gap: 12px;
+      border-bottom: 1px solid var(--card-border);
+      margin-bottom: 12px;
+      padding: 0 0 12px;
+    }
+
+    .tab-btn {
+      padding: 8px 12px;
+      border: none;
+      background: none;
+      border-bottom: 2px solid transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: .2s;
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Advanced Filter */
+    .filter-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .filter-bar input,
+    .filter-bar select {
+      padding: 8px 10px;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      background: var(--card-bg);
+      color: var(--text);
+      font-size: 12px;
+    }
+
+    .filter-bar input::placeholder {
+      color: var(--muted);
+    }
+
+    /* Mini Stats */
+    .mini-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .mini-stat {
+      background: rgba(34,197,94,0.10);
+      border: 1px solid rgba(34,197,94,0.22);
+      border-radius: 12px;
+      padding: 10px;
+      text-align: center;
+      font-size: 12px;
+    }
+
+    .mini-stat .label {
+      display: block;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .mini-stat .value {
+      display: block;
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    /* Sensor Grid */
+    .sensor-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    @media (max-width: 768px) {
+      .sensor-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo"><i class="fa-solid fa-seedling"></i></div>
+        <div class="meta">
+          <b>AISa Smart Farming</b>
+          <span>Ayam • Ikan • Sayur</span>
+        </div>
+      </div>
+
+      <nav class="menu">
+        <a href="index.html"><i class="fa-solid fa-house"></i> Dashboard</a>
+        <a href="monitoring.html"><i class="fa-solid fa-chart-line"></i> Monitoring</a>
+        <a href="control.html"><i class="fa-solid fa-sliders"></i> Automation</a>
+        <a href="greenhouse.html"><i class="fa-solid fa-leaf"></i> Greenhouse</a>
+        <a href="analytics.html"><i class="fa-solid fa-chart-pie"></i> Analytics</a>
+        <a href="notifications.html"><i class="fa-solid fa-bell"></i> Notifications</a>
+        <a href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <header class="topbar">
+        <div class="left">
+          <button class="icon-btn" data-action="toggle-sidebar" aria-label="Toggle Sidebar">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+
+          <div class="page-title">
+            <b>Monitoring Sensor</b>
+            <span>Real-time sensor data dan historical analysis</span>
+          </div>
+        </div>
+
+        <div class="right">
+          <div class="pill">
+            <span class="dot"></span>
+            <span>Live: Connected</span>
+          </div>
+          <button class="icon-btn" data-action="toggle-theme" aria-label="Toggle Theme">
+            <i class="fa-solid fa-sun"></i>
+          </button>
+        </div>
+      </header>
+
+      <section class="content">
+
+        <!-- Section 1: Sensor Cards Grid -->
+        <div class="grid">
+          <div class="card col-12">
+            <div class="card-header">
+              <div class="card-title"><i class="fa-solid fa-gauge"></i> Sensor Overview</div>
+              <span class="badge success">6 Sensors Active</span>
+            </div>
+
+            <div class="sensor-grid">
+              <!-- DHT11 - Suhu & Kelembaban -->
+              <div class="card sensor-card">
+                <div class="card-header">
+                  <div class="card-title" style="font-size: 14px;">
+                    <i class="fa-solid fa-temperature-high"></i> DHT11 - Suhu Udara
+                  </div>
+                </div>
+
+                <div class="stat">
+                  <div>
+                    <span class="value" style="font-size: 22px;" data-stat-sensor="dht11-temp">26.0</span>
+                    <span class="unit">°C</span>
+                  </div>
+                </div>
+
+                <div class="sensor-status-row">
+                  <span>
+                    <span class="status-dot online"></span>
+                    Online
+                  </span>
+                  <span data-sensor-update="dht11-temp">Just now</span>
+                </div>
+
+                <div class="sensor-mini-chart">
+                  <canvas id="miniChart-dht11-temp"></canvas>
+                </div>
+
+                <div style="display: flex; gap: 6px; font-size: 12px; margin-top: 6px;">
+                  <span class="badge" style="flex: 1; text-align: center;">Min: <b data-sensor-min="dht11-temp">24.5</b>°C</span>
+                  <span class="badge" style="flex: 1; text-align: center;">Max: <b data-sensor-max="dht11-temp">27.8</b>°C</span>
+                  <span class="badge" style="flex: 1; text-align: center;">Avg: <b data-sensor-avg="dht11-temp">26.1</b>°C</span>
+                </div>
+              </div>
+
+              <!-- DHT11 - Kelembaban -->
+              <div class="card sensor-card">
+                <div class="card-header">
+                  <div class="card-title" style="font-size: 14px;">
+                    <i class="fa-solid fa-water"></i> DHT11 - Kelembaban
+                  </div>
+                </div>
+
+                <div class="stat">
+                  <div>
+                    <span class="value" style="font-size: 22px;" data-stat-sensor="dht11-hum">65</span>
+                    <span class="unit">%</span>
+                  </div>
+                </div>
+
+                <div class="sensor-status-row">
+                  <span>
+                    <span class="status-dot online"></span>
+                    Online
+                  </span>
+                  <span data-sensor-update="dht11-hum">Just now</span>
+                </div>
+
+                <div class="sensor-mini-chart">
+                  <canvas id="miniChart-dht11-hum"></canvas>
+                </div>
+
+                <div style="display: flex; gap: 6px; font-size: 12px; margin-top: 6px;">
+                  <span class="badge" style="flex: 1; text-align: center;">Min: <b data-sensor-min="dht11-hum">58</b>%</span>
+                  <span class="badge" style="flex: 1; text-align: center;">Max: <b data-sensor-max="dht11-hum">72</b>%</span>
+                  <span class="badge" style="flex: 1; text-align: center;">Avg: <b data-sensor-avg="dht11-hum">65</b>%</span>
+                </div>
+              </div>
+
+              <!-- DS18B20 - Suhu Air -->
+              <div class="card sensor-card">
+                <div class="card-header">
+                  <div class="card-title" style="font-size: 14px;">
+                    <i class="fa-solid fa-droplet"></i> DS18B20 - Suhu Air
+                  </div>
+                </div>
+
+                <div class="stat">
+                  <div>
+                    <span class="value" style="font-size: 22px;" data-stat-sensor="ds18b20">24.2</span>
+                    <span class="unit">°C</span>
+                  </div>
+                </div>
+
+                <div class="sensor-status-row">
+                  <span>
+                    <span class="status-dot online"></span>
+                    Online
+                  </span>
+                  <span data-sensor-update="ds18b20">Just now</span>
+                </div>
+
+                <div class="sensor-mini-chart">
+                  <canvas id="miniChart-ds18b20"></canvas>
+                </div>
+
+                <div style="display: flex; gap: 6px; font-size: 12px; margin-top: 6px;">
+                  <span class="badge" style="flex: 1; text-align: center;">Min: <b data-sensor-min="ds18b20">23.1</b>°C</span>
+                  <span class="badge" style="flex: 1; text-align: center;">Max: <b data-sensor-max="ds18b20">25.5</b>°C</span>
+                  <span class="badge" style="flex: 1; text-align: center;">Avg: <b data-sensor-avg="ds18b20">24.2</b>°C</span>
+                </div>
+              </div>
+
+              <!-- pH Sensor -->
+              <div class="card sensor-card">
+                <div class="card-header">
+                  <div class="card-title" style="font-size: 14px;">
+                    <i class="fa-solid fa-vial"></i> pH Sensor
+                  </div>
+                </div>
+
+                <div class="stat">
+                  <div>
+                    <span class="value" style="font-size: 22px;" data-stat-sensor="ph-sensor">6.80</span>
+                    <span class="unit">pH</span>
+                  </div>
+                </div>
+
+                <div class="sensor-status-row">
+                  <span>
+                    <span class="status-dot warning"></span>
+                    Caution
+                  </span>
+                  <span data-sensor-update="ph-sensor">Just now</span>
+                </div>
+
+                <div class="sensor-mini-chart">
+                  <canvas id="miniChart-ph-sensor"></canvas>
+                </div>
+
+                <div style="display: flex; gap: 6px; font-size: 12px; margin-top: 6px;">
+                  <span class="badge warning" style="flex: 1; text-align: center;">Min: <b data-sensor-min="ph-sensor">6.50</b></span>
+                  <span class="badge" style="flex: 1; text-align: center;">Max: <b data-sensor-max="ph-sensor">7.10</b></span>
+                  <span class="badge" style="flex: 1; text-align: center;">Avg: <b data-sensor-avg="ph-sensor">6.80</b></span>
+                </div>
+              </div>
+
+              <!-- TDS Sensor -->
+              <div class="card sensor-card">
+                <div class="card-header">
+                  <div class="card-title" style="font-size: 14px;">
+                    <i class="fa-solid fa-flask-vial"></i> TDS Sensor - Nutrisi
+                  </div>
+                </div>
+
+                <div class="stat">
+                  <div>
+                    <span class="value" style="font-size: 22px;" data-stat-sensor="tds-sensor">900</span>
+                    <span class="unit">ppm</span>
+                  </div>
+                </div>
+
+                <div class="sensor-status-row">
+                  <span>
+                    <span class="status-dot online"></span>
+                    Online
+                  </span>
+                  <span data-sensor-update="tds-sensor">Just now</span>
+                </div>
+
+                <div class="sensor-mini-chart">
+                  <canvas id="miniChart-tds-sensor"></canvas>
+                </div>
+
+                <div style="display: flex; gap: 6px; font-size: 12px; margin-top: 6px;">
+                  <span class="badge" style="flex: 1; text-align: center;">Min: <b data-sensor-min="tds-sensor">850</b>ppm</span>
+                  <span class="badge" style="flex: 1; text-align: center;">Max: <b data-sensor-max="tds-sensor">960</b>ppm</span>
+                  <span class="badge" style="flex: 1; text-align: center;">Avg: <b data-sensor-avg="tds-sensor">900</b>ppm</span>
+                </div>
+              </div>
+
+              <!-- Ultrasonic - Level Air -->
+              <div class="card sensor-card">
+                <div class="card-header">
+                  <div class="card-title" style="font-size: 14px;">
+                    <i class="fa-solid fa-water"></i> Ultrasonic - Level Air
+                  </div>
+                </div>
+
+                <div class="stat">
+                  <div>
+                    <span class="value" style="font-size: 22px;" data-stat-sensor="ultrasonic">18.0</span>
+                    <span class="unit">cm</span>
+                  </div>
+                </div>
+
+                <div class="sensor-status-row">
+                  <span>
+                    <span class="status-dot online"></span>
+                    Online
+                  </span>
+                  <span data-sensor-update="ultrasonic">Just now</span>
+                </div>
+
+                <div class="sensor-mini-chart">
+                  <canvas id="miniChart-ultrasonic"></canvas>
+                </div>
+
+                <div style="display: flex; gap: 6px; font-size: 12px; margin-top: 6px;">
+                  <span class="badge" style="flex: 1; text-align: center;">Min: <b data-sensor-min="ultrasonic">16.5</b>cm</span>
+                  <span class="badge" style="flex: 1; text-align: center;">Max: <b data-sensor-max="ultrasonic">19.8</b>cm</span>
+                  <span class="badge" style="flex: 1; text-align: center;">Avg: <b data-sensor-avg="ultrasonic">18.0</b>cm</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Detail Graph + Tabs -->
+        <div class="grid">
+          <div class="card col-12">
+            <div class="card-header">
+              <div class="card-title"><i class="fa-solid fa-chart-line"></i> Detailed Sensor Graph</div>
+              <span class="badge">Interactive view</span>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="tabs">
+              <button class="tab-btn active" onclick="switchTab(event, 'tab-temp')">
+                <i class="fa-solid fa-temperature-high"></i>&nbsp; Temperature
+              </button>
+              <button class="tab-btn" onclick="switchTab(event, 'tab-humidity')">
+                <i class="fa-solid fa-water"></i>&nbsp; Humidity
+              </button>
+              <button class="tab-btn" onclick="switchTab(event, 'tab-ph')">
+                <i class="fa-solid fa-vial"></i>&nbsp; pH
+              </button>
+              <button class="tab-btn" onclick="switchTab(event, 'tab-tds')">
+                <i class="fa-solid fa-droplet"></i>&nbsp; Nutrisi (TDS)
+              </button>
+              <button class="tab-btn" onclick="switchTab(event, 'tab-water')">
+                <i class="fa-solid fa-water"></i>&nbsp; Water Level
+              </button>
+            </div>
+
+            <!-- Tab 1: Temperature -->
+            <div id="tab-temp" class="tab-content active" style="height: 380px;">
+              <canvas id="detailChart-temp"></canvas>
+            </div>
+
+            <!-- Tab 2: Humidity -->
+            <div id="tab-humidity" class="tab-content" style="height: 380px;">
+              <canvas id="detailChart-humidity"></canvas>
+            </div>
+
+            <!-- Tab 3: pH -->
+            <div id="tab-ph" class="tab-content" style="height: 380px;">
+              <canvas id="detailChart-ph"></canvas>
+            </div>
+
+            <!-- Tab 4: TDS -->
+            <div id="tab-tds" class="tab-content" style="height: 380px;">
+              <canvas id="detailChart-tds"></canvas>
+            </div>
+
+            <!-- Tab 5: Water Level -->
+            <div id="tab-water" class="tab-content" style="height: 380px;">
+              <canvas id="detailChart-water"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Sensor History Table -->
+        <div class="grid">
+          <div class="card col-12">
+            <div class="card-header">
+              <div class="card-title"><i class="fa-solid fa-history"></i> Sensor History</div>
+              <span class="badge">Last 24 hours</span>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="filter-bar">
+              <input type="text" placeholder="Search sensor..." id="filter-sensor" />
+              <select id="filter-status">
+                <option value="">All Status</option>
+                <option value="normal">Normal</option>
+                <option value="warning">Warning</option>
+                <option value="critical">Critical</option>
+              </select>
+              <select id="filter-period">
+                <option value="24h">Last 24h</option>
+                <option value="7d">Last 7 days</option>
+                <option value="30d">Last 30 days</option>
+              </select>
+              <button class="icon-btn" onclick="exportTable()" title="Export CSV">
+                <i class="fa-solid fa-download"></i>
+              </button>
+            </div>
+
+            <!-- Sensor History Table -->
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Waktu</th>
+                  <th>Sensor</th>
+                  <th>Nilai</th>
+                  <th>Threshold</th>
+                  <th>Status</th>
+                  <th>Catatan</th>
+                </tr>
+              </thead>
+              <tbody id="history-tbody">
+                <tr>
+                  <td>2024-01-15 14:35:12</td>
+                  <td><b>DHT11 - Suhu</b></td>
+                  <td>26.5°C</td>
+                  <td>20-28°C</td>
+                  <td><span class="badge success">Normal</span></td>
+                  <td>Dalam range optimal</td>
+                </tr>
+                <tr>
+                  <td>2024-01-15 14:35:10</td>
+                  <td><b>DHT11 - Humidity</b></td>
+                  <td>64%</td>
+                  <td>50-80%</td>
+                  <td><span class="badge success">Normal</span></td>
+                  <td>Kelembaban stabil</td>
+                </tr>
+                <tr>
+                  <td>2024-01-15 14:35:08</td>
+                  <td><b>pH Sensor</b></td>
+                  <td>6.80 pH</td>
+                  <td>6.50-7.50 pH</td>
+                  <td><span class="badge warning">Warning</span></td>
+                  <td>pH mulai turun, perlu monitoring</td>
+                </tr>
+                <tr>
+                  <td>2024-01-15 14:35:06</td>
+                  <td><b>TDS Sensor</b></td>
+                  <td>900 ppm</td>
+                  <td>800-1000 ppm</td>
+                  <td><span class="badge success">Normal</span></td>
+                  <td>Nutrisi optimal</td>
+                </tr>
+                <tr>
+                  <td>2024-01-15 14:35:04</td>
+                  <td><b>Ultrasonic</b></td>
+                  <td>18.0 cm</td>
+                  <td>15-25 cm</td>
+                  <td><span class="badge success">Normal</span></td>
+                  <td>Level air normal</td>
+                </tr>
+                <tr>
+                  <td>2024-01-15 14:34:50</td>
+                  <td><b>DS18B20</b></td>
+                  <td>24.2°C</td>
+                  <td>22-26°C</td>
+                  <td><span class="badge success">Normal</span></td>
+                  <td>Suhu air stabil</td>
+                </tr>
+                <tr>
+                  <td>2024-01-15 14:30:12</td>
+                  <td><b>pH Sensor</b></td>
+                  <td>6.75 pH</td>
+                  <td>6.50-7.50 pH</td>
+                  <td><span class="badge success">Normal</span></td>
+                  <td>Readings normal</td>
+                </tr>
+                <tr>
+                  <td>2024-01-15 14:25:10</td>
+                  <td><b>DHT11 - Suhu</b></td>
+                  <td>26.2°C</td>
+                  <td>20-28°C</td>
+                  <td><span class="badge success">Normal</span></td>
+                  <td>Dalam range optimal</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Section 4: Statistics Summary -->
+        <div class="grid">
+          <div class="card col-12">
+            <div class="card-header">
+              <div class="card-title"><i class="fa-solid fa-chart-bar"></i> Daily Statistics</div>
+              <span class="badge">Aggregated data</span>
+            </div>
+
+            <div class="mini-stats">
+              <div class="mini-stat">
+                <span class="label">Total Readings</span>
+                <span class="value">8,640</span>
+              </div>
+              <div class="mini-stat">
+                <span class="label">Avg Uptime</span>
+                <span class="value">99.8%</span>
+              </div>
+              <div class="mini-stat">
+                <span class="label">Warnings</span>
+                <span class="value">2</span>
+              </div>
+              <div class="mini-stat">
+                <span class="label">Critical</span>
+                <span class="value">0</span>
+              </div>
+              <div class="mini-stat">
+                <span class="label">Avg Temp</span>
+                <span class="value">26.1°C</span>
+              </div>
+              <div class="mini-stat">
+                <span class="label">Avg Humidity</span>
+                <span class="value">65%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </main>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script src="js/chart.js"></script>
+  
+  <!-- Monitoring-specific scripts -->
+  <script>
+    // Tab switching function
+    function switchTab(event, tabName) {
+      event.preventDefault();
+      
+      // Hide all tabs
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // Remove active class from all buttons
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      // Show selected tab
+      document.getElementById(tabName).classList.add('active');
+      event.target.closest('.tab-btn').classList.add('active');
+
+      // Trigger chart update/redraw
+      setTimeout(() => {
+        window.AISaMonitoring?.updateCharts();
+      }, 100);
+    }
+
+    // Mini chart initialization
+    function initMiniCharts() {
+      const sensors = [
+        { id: 'dht11-temp', label: 'Suhu (°C)', color: '#16a34a' },
+        { id: 'dht11-hum', label: 'Humidity (%)', color: '#22c55e' },
+        { id: 'ds18b20', label: 'Water Temp (°C)', color: '#0f172a' },
+        { id: 'ph-sensor', label: 'pH', color: '#facc15' },
+        { id: 'tds-sensor', label: 'TDS (ppm)', color: '#3b82f6' },
+        { id: 'ultrasonic', label: 'Level (cm)', color: '#06b6d4' }
+      ];
+
+      sensors.forEach(sensor => {
+        const el = document.getElementById(`miniChart-${sensor.id}`);
+        if (!el) return;
+
+        const ctx = el.getContext('2d');
+        const labels = Array.from({ length: 10 }, (_, i) => `${i*5}m`);
+        const data = labels.map(() => 
+          sensor.id.includes('temp') ? 24 + Math.random() * 4 :
+          sensor.id.includes('hum') ? 60 + Math.random() * 12 :
+          sensor.id.includes('ph') ? 6.5 + Math.random() * 1 :
+          sensor.id.includes('tds') ? 850 + Math.random() * 150 :
+          16 + Math.random() * 4
+        );
+
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [{
+              label: sensor.label,
+              data,
+              borderColor: sensor.color,
+              backgroundColor: sensor.color + '22',
+              borderWidth: 1.5,
+              fill: true,
+              tension: 0.3,
+              pointRadius: 1,
+              pointHoverRadius: 3,
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { display: false, grid: { display: false } },
+              y: { display: false, grid: { display: false } }
+            }
+          }
+        });
+      });
+    }
+
+    // Detail charts initialization
+    function initDetailCharts() {
+      if (typeof Chart === 'undefined') return;
+
+      const chartConfigs = [
+        {
+          id: 'detailChart-temp',
+          title: 'Temperature (°C)',
+          color: '#16a34a',
+          datasets: [
+            { label: 'DHT11 Udara', data: Array(24).fill(0).map(() => 24 + Math.random()*4) },
+            { label: 'DS18B20 Air', data: Array(24).fill(0).map(() => 22 + Math.random()*3) }
+          ]
+        },
+        {
+          id: 'detailChart-humidity',
+          title: 'Humidity (%)',
+          color: '#22c55e',
+          datasets: [
+            { label: 'DHT11', data: Array(24).fill(0).map(() => 55 + Math.random()*20) }
+          ]
+        },
+        {
+          id: 'detailChart-ph',
+          title: 'pH Level',
+          color: '#facc15',
+          datasets: [
+            { label: 'pH Sensor', data: Array(24).fill(0).map(() => 6.5 + Math.random()*1) }
+          ]
+        },
+        {
+          id: 'detailChart-tds',
+          title: 'TDS / Nutrisi (ppm)',
+          color: '#3b82f6',
+          datasets: [
+            { label: 'TDS Sensor', data: Array(24).fill(0).map(() => 850 + Math.random()*150) }
+          ]
+        },
+        {
+          id: 'detailChart-water',
+          title: 'Water Level (cm)',
+          color: '#06b6d4',
+          datasets: [
+            { label: 'Ultrasonic', data: Array(24).fill(0).map(() => 16 + Math.random()*4) }
+          ]
+        }
+      ];
+
+      chartConfigs.forEach(config => {
+        const el = document.getElementById(config.id);
+        if (!el) return;
+
+        const ctx = el.getContext('2d');
+        const labels = Array.from({ length: 24 }, (_, i) => `${i}:00`);
+
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: config.datasets.map((ds, idx) => ({
+              label: ds.label,
+              data: ds.data,
+              borderColor: ['#16a34a', '#22c55e', '#facc15'][idx] || config.color,
+              backgroundColor: (
+                ['#16a34a', '#22c55e', '#facc15'][idx] || config.color
+              ) + '22',
+              borderWidth: 2,
+              fill: idx === 0,
+              tension: 0.4,
+              pointRadius: 2,
+              pointHoverRadius: 5,
+            }))
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                labels: {
+                  color: getComputedStyle(document.documentElement)
+                    .getPropertyValue('--text'),
+                  font: { size: 11 }
+                }
+              }
+            },
+            scales: {
+              x: {
+                ticks: {
+                  color: getComputedStyle(document.documentElement)
+                    .getPropertyValue('--muted'),
+                  font: { size: 10 }
+                },
+                grid: {
+                  color: 'rgba(148,163,184,0.10)'
+                }
+              },
+              y: {
+                ticks: {
+                  color: getComputedStyle(document.documentElement)
+                    .getPropertyValue('--muted'),
+                  font: { size: 10 }
+                },
+                grid: {
+                  color: 'rgba(148,163,184,0.10)'
+                }
+              }
+            }
+          }
+        });
+      });
+    }
+
+    // Export table to CSV
+    function exportTable() {
+      const table = document.querySelector('.table');
+      let csv = [];
+
+      // Headers
+      const headers = [];
+      table.querySelectorAll('th').forEach(th => {
+        headers.push(th.textContent.trim());
+      });
+      csv.push(headers.join(','));
+
+      // Rows
+      table.querySelectorAll('tbody tr').forEach(tr => {
+        const row = [];
+        tr.querySelectorAll('td').forEach(td => {
+          row.push(td.textContent.trim());
+        });
+        csv.push(row.join(','));
+      });
+
+      const csvContent = csv.join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `sensor-history-${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+
+      window.AISaToast?.info('Data exported successfully', 'Export');
+    }
+
+    // Realtime sensor updates
+    function simulateSensorUpdates() {
+      const sensors = {
+        'dht11-temp': { min: 24, max: 28, unit: '°C' },
+        'dht11-hum': { min: 50, max: 80, unit: '%' },
+        'ds18b20': { min: 22, max: 26, unit: '°C' },
+        'ph-sensor': { min: 6.5, max: 7.5, unit: 'pH' },
+        'tds-sensor': { min: 800, max: 1000, unit: 'ppm' },
+        'ultrasonic': { min: 15, max: 25, unit: 'cm' }
+      };
+
+      setInterval(() => {
+        Object.entries(sensors).forEach(([id, config]) => {
+          const val = config.min + Math.random() * (config.max - config.min);
+          const display = config.unit === '%' ? Math.round(val) : val.toFixed(
+            config.unit === 'pH' ? 2 : config.unit === 'ppm' ? 0 : 1
+          );
+
+          // Update main stat
+          const statEl = document.querySelector(`[data-stat-sensor="${id}"]`);
+          if (statEl) statEl.textContent = display;
+
+          // Update timestamp
+          const timeEl = document.querySelector(`[data-sensor-update="${id}"]`);
+          if (timeEl) timeEl.textContent = 'Just now';
+
+          // Update min/max/avg (simple simulation)
+          const minEl = document.querySelector(`[data-sensor-min="${id}"]`);
+          const maxEl = document.querySelector(`[data-sensor-max="${id}"]`);
+          if (minEl && parseFloat(display) < parseFloat(minEl.textContent)) {
+            minEl.textContent = display;
+          }
+          if (maxEl && parseFloat(display) > parseFloat(maxEl.textContent)) {
+            maxEl.textContent = display;
+          }
+        });
+      }, 5000);
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      initMiniCharts();
+      initDetailCharts();
+      simulateSensorUpdates();
+
+      // Expose update method
+      window.AISaMonitoring = {
+        updateCharts: () => {
+          // Charts will auto-redraw on tab switch
+        }
+      };
+    });
+  </script>
+</body>
+</html>
